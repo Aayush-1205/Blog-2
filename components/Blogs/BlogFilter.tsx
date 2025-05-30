@@ -299,7 +299,7 @@ const BlogsFilter = ({ setAllPosts }: PageProp) => {
               {showCount.topic < filteredTopics.length ? (
                 <button
                   onClick={() => handleShowMore("topic")}
-                  className="px-3 py-1 text-sm text-accent border border-accent rounded-lg bg-accent/10 hover:bg-accent/20"
+                  className="px-3 py-1 text-sm text-[#7B00D3] border border-[#7B00D3] rounded-lg bg-[#7B00D3]/10 hover:bg-[#7B00D3]/20"
                 >
                   {showCount.topic >= 12 ? "Show All" : "Show More"}
                 </button>
@@ -308,7 +308,7 @@ const BlogsFilter = ({ setAllPosts }: PageProp) => {
                   onClick={() =>
                     setShowCount((prev) => ({ ...prev, topic: 4 }))
                   }
-                  className="px-3 py-1 text-sm text-accent border border-accent rounded-lg bg-accent/10 hover:bg-accent/20"
+                  className="px-3 py-1 text-sm text-[#7B00D3] border border-[#7B00D3] rounded-lg bg-[#7B00D3]/10 hover:bg-[#7B00D3]/20"
                 >
                   Show Less
                 </button>

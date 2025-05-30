@@ -252,7 +252,7 @@ const TopicsComponent = () => {
             type="text"
             className="border-none focus:outline-none w-full text-base sm:text-lg px-2 py-1"
             placeholder="Search Topics..."
-            value={topicsQuery}
+            value={topicsQuery.replaceAll("_", " ")}
             onChange={handleInputChange}
             aria-label="Search blogs by topic"
           />

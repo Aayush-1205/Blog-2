@@ -83,7 +83,6 @@ const TagsComponent = () => {
   // Fetch initial data
   useEffect(() => {
     if (!hasFetchedInitial.current) {
-      ("[Initial Fetch Effect] Fetching initial data");
       dispatch(fetchAvailableTags());
       const tag = searchParams.get("tag");
       dispatch(fetchBlogs({ tag: tag || undefined, page: 1, limit: 12 }));

@@ -11,20 +11,19 @@ cloudinary.config({
 // Interface for Cloudinary upload result
 interface CloudinaryUploadResult {
   public_id: string;
-  format: string;
-  resource_type: "image" | "video" | "raw" | "auto";
   secure_url: string;
-  url: string;
   width: number;
   height: number;
   bytes: number;
+  format: string;
+  resource_type: "image";
   created_at: string;
   original_filename: string;
   tags?: string[];
   folder?: string;
 }
 
-// Force Node.js runtime to avoid Vercel Edge issues
+// Force Node.js runtime
 export const runtime = "nodejs";
 
 // Constants for validation
@@ -56,6 +55,15 @@ const validateFile = (file: File): { isValid: boolean; error?: string } => {
   return { isValid: true };
 };
 
+// Utility function to sanitize folder name
+const sanitizeFolderName = (name: string): string => {
+  return name
+    .trim()
+    .replace(/[^a-zA-Z0-9-_]/g, "-")
+    .replace(/-+/g, "-")
+    .slice(0, 50);
+};
+
 export async function POST(request: NextRequest) {
   try {
     // Validate content-type
@@ -68,13 +76,14 @@ export async function POST(request: NextRequest) {
 
     const formData = await request.formData();
     const files = formData.getAll("file") as File[];
-    const folderName = formData.get("folderName") as string | null;
+    let folderName = formData.get("folderName") as string | null;
     const tags =
       formData
         .get("tags")
         ?.toString()
         .split(",")
-        .map((tag) => tag.trim()) || [];
+        .map((tag) => tag.trim())
+        .filter((tag) => tag) || [];
 
     // Validate inputs
     if (files.length === 0) {
@@ -87,16 +96,14 @@ export async function POST(request: NextRequest) {
       );
     }
     if (!folderName) {
-      return NextResponse.json(
-        { error: "Folder name is required" },
-        { status: 400 }
-      );
+      folderName = "blog-images"; // Default folder
+    } else {
+      folderName = sanitizeFolderName(folderName);
     }
 
     const uploadedFiles: { secure_url: string; public_id: string }[] = [];
 
     for (const file of files) {
-      // Validate file type and size
       const { isValid, error } = validateFile(file);
       if (!isValid) {
         return NextResponse.json({ error }, { status: 400 });
@@ -109,9 +116,14 @@ export async function POST(request: NextRequest) {
         (resolve, reject) => {
           const uploadStream = cloudinary.uploader.upload_stream(
             {
-              folder: folderName,
+              folder: `${folderName}`,
               tags: tags.length > 0 ? tags : undefined,
               resource_type: "image",
+              transformation: [
+                { width: 1200, height: 800, crop: "limit" },
+                { quality: "auto" },
+                { fetch_format: "auto" },
+              ],
             },
             (error, result) => {
               if (error) reject(error);
@@ -138,7 +150,10 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error("Error uploading files to Cloudinary:", error);
     return NextResponse.json(
-      { error: "Failed to upload files" },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to upload files",
+      },
       { status: 500 }
     );
   }
@@ -158,6 +173,7 @@ export async function DELETE(request: NextRequest) {
 
     const result = await cloudinary.uploader.destroy(publicId, {
       resource_type: "image",
+      invalidate: true,
     });
 
     if (result.result !== "ok") {
@@ -174,7 +190,10 @@ export async function DELETE(request: NextRequest) {
   } catch (error) {
     console.error("Error deleting image from Cloudinary:", error);
     return NextResponse.json(
-      { error: "Failed to delete image" },
+      {
+        error:
+          error instanceof Error ? error.message : "Failed to delete image",
+      },
       { status: 500 }
     );
   }
